@@ -72,23 +72,23 @@ function generateMaze(width, height) {
         }
     }
     function replaceRandomWallWithRed(maze, redCount) {
-        const walls = [];
-        
-        // 壁ブロックの座標をリストに追加
-        for (let y = 0; y < maze.length; y++) {
-            for (let x = 0; x < maze[y].length; x++) {
-                if (maze[y][x] === 1) {
-                    walls.push({ x, y });
-                }
-            }
-        }
-    
-        // 指定された数の壁ブロックをランダムに赤色に置き換える
-        for (let i = 0; i < redCount && walls.length > 0; i++) {
-            const randomIndex = Math.floor(Math.random() * walls.length);
-            const { x, y } = walls.splice(randomIndex, 1)[0];
-            maze[y][x] = 4; // 赤色のブロックに置き換える
-        }
+        // const walls = [];
+
+        // // 壁ブロックの座標をリストに追加
+        // for (let y = 0; y < maze.length; y++) {
+        //     for (let x = 0; x < maze[y].length; x++) {
+        //         if (maze[y][x] === 1) {
+        //             walls.push({ x, y });
+        //         }
+        //     }
+        // }
+
+        // // 指定された数の壁ブロックをランダムに赤色に置き換える
+        // for (let i = 0; i < redCount && walls.length > 0; i++) {
+        //     const randomIndex = Math.floor(Math.random() * walls.length);
+        //     const { x, y } = walls.splice(randomIndex, 1)[0];
+        //     maze[y][x] = 4; // 赤色のブロックに置き換える
+        // }
         return maze;
     }
 
