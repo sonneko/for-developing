@@ -12,7 +12,7 @@ const CANVAS_HEIGHT = 10;
 const WORLD_HEIGHT = 30;
 const WORLD_WIDTH = 30;
 
-const RED_FREQ = 0.05;
+const RED_FREQ = 0;
 
 const WIDTH_GAP = Math.floor(CANVAS_WIDTH / 2);
 const HEIGHT_GAP = Math.floor(CANVAS_HEIGHT / 2);
@@ -190,6 +190,7 @@ function move(worldData, scrollY, scrollX) {
 }
 
 function init() {
+    alert("start!!");
     load();
     canMove = true;
 }
