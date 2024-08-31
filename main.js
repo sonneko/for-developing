@@ -44,6 +44,8 @@ let didFinish = false;
 let timer = 0;
 let point = 0;
 
+let enemyList = [];
+
 function alertTitle(str) {
     titleEle.innerHTML = `<h1>${str}</h1>`;
     setTimeout(() => {
@@ -103,7 +105,7 @@ function generateMaze(width, height) {
             const randomIndex = Math.floor(Math.random() * walls.length);
             const { x, y } = walls.splice(randomIndex, 1)[0];
             const randomNum = Math.floor(Math.random() * 8);
-            switch(randomNum) {
+            switch (randomNum) {
                 case 0:
                 case 1:
                 case 2:
@@ -141,15 +143,15 @@ for (let i = 0; i <= WORLD_HEIGHT; i++) {
     world.blocks.push(bow);
 }
 
-try{
-const maze = generateMaze(WORLD_WIDTH - WIDTH_GAP + 2, WORLD_HEIGHT - HEIGHT_GAP + 2);
-for (let y = 0; y <= WORLD_HEIGHT; y++) {
-    for (let x = 0; x <= WORLD_WIDTH; x++) {
-        if (WIDTH_GAP - 1 < x && x < WORLD_WIDTH - WIDTH_GAP && HEIGHT_GAP - 1 < y && y < WORLD_HEIGHT - HEIGHT_GAP)
-            world.blocks[y][x] = maze[y][x];
+try {
+    const maze = generateMaze(WORLD_WIDTH - WIDTH_GAP + 2, WORLD_HEIGHT - HEIGHT_GAP + 2);
+    for (let y = 0; y <= WORLD_HEIGHT; y++) {
+        for (let x = 0; x <= WORLD_WIDTH; x++) {
+            if (WIDTH_GAP - 1 < x && x < WORLD_WIDTH - WIDTH_GAP && HEIGHT_GAP - 1 < y && y < WORLD_HEIGHT - HEIGHT_GAP)
+                world.blocks[y][x] = maze[y][x];
+        }
     }
-}
-}catch(e) {
+} catch (e) {
     alert(e);
 }
 
@@ -158,9 +160,9 @@ world.blocks[HEIGHT_GAP][WIDTH_GAP] = 5;
 // ゴール地点
 // ゴール地点
 world.blocks
-    [Math.floor(Math.random() * (WORLD_HEIGHT - HEIGHT_GAP - 1)) + HEIGHT_GAP + 1]
-    [Math.floor(Math.random() * (WORLD_WIDTH - WIDTH_GAP - 1)) + WIDTH_GAP + 1]
-         = 3;
+[Math.floor(Math.random() * (WORLD_HEIGHT - HEIGHT_GAP - 1)) + HEIGHT_GAP + 1]
+[Math.floor(Math.random() * (WORLD_WIDTH - WIDTH_GAP - 1)) + WIDTH_GAP + 1]
+    = 3;
 
 
 let playerX = 0;
@@ -240,8 +242,28 @@ function init() {
             timer++;
         }
     }, 1000)
+    // summon enemy
+    summonEnemy();
     load();
     canMove = true;
+}
+
+function summonEnemy() {
+    const walls = [];
+
+    // 通路の座標をリストに追加
+    for (let y = 0; y < maze.length; y++) {
+        for (let x = 0; x < maze[y].length; x++) {
+            if (maze[y][x] === 0) {
+                walls.push({ x, y });
+            }
+        }
+    }
+
+    // 通路からランダムに敵を生成
+    const randomIndex = Math.floor(Math.random() * walls.length);
+    const { x, y } = walls[randomIndex];
+    enemyList.push({ x, y })
 }
 
 function getNowBlock(x = 0, y = 0) {
@@ -254,6 +276,13 @@ function setNowBlock(id, x = 0, y = 0) {
 
 function mainLoop() {
     const nowBlock = getNowBlock();
+    enemyList.forEach((item) => {
+        if (item.x === playerX && item.y === playerY) {
+            alertTitle("game over");
+            canMove = false;
+            didFinish = true;
+        }
+    })
     if (nowBlock === 4) {
         alertTitle("game over");
         canMove = false;
