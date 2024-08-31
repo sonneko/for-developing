@@ -30,6 +30,18 @@ html,body {
     padding: 0;
 }
 
+#titleBox h1{
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+#titleBox h1{
+    font-size: 100px;
+    color: green;
+}
 
 
 #canvas table{

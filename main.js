@@ -6,24 +6,27 @@ document.addEventListener('touchmove', function (event) {
 
 // get element
 const canvasEle = document.getElementById("canvas");
+const titleEle = document.getElementById("titleBox");
 
-const CANVAS_WIDTH = 10;
-const CANVAS_HEIGHT = 10;
+const CANVAS_WIDTH = 7;
+const CANVAS_HEIGHT = 7;
 const WORLD_HEIGHT = 30;
 const WORLD_WIDTH = 30;
 
-const RED_FREQ = 0;
+const RED_FREQ = 0.16;
 
-const WIDTH_GAP = Math.floor(CANVAS_WIDTH / 2);
-const HEIGHT_GAP = Math.floor(CANVAS_HEIGHT / 2);
+// const WIDTH_GAP = Math.floor(CANVAS_WIDTH / 2);
+// const HEIGHT_GAP = Math.floor(CANVAS_HEIGHT / 2);
+const WIDTH_GAP = 3
+const HEIGHT_GAP = 3
 
 const texture = {
-    0: "white",
-    1: "black",
-    2: "yellow",
-    3: "blue",
-    4: "red",
-    5: "green"
+    0: "white",     // 通路
+    1: "black",     // 壁
+    2: "yellow",    // ポイント
+    3: "blue",      // ゴール
+    4: "red",       // わな
+    5: "green"      // スタート地点
 }
 
 const touchData = {
@@ -36,7 +39,17 @@ const touchData = {
 }
 
 let canMove = false;
+let canGoal = false;
+let didFinish = false;
+let timer = 0;
 let point = 0;
+
+function alertTitle(str) {
+    titleEle.innerHTML = `<h1>${str}</h1>`;
+    setTimeout(() => {
+        titleEle.innerHTML = "";
+    }, 3000);
+}
 
 function generateMaze(width, height) {
     // 迷路を生成するための初期化
@@ -71,6 +84,8 @@ function generateMaze(width, height) {
             }
         }
     }
+
+    // 指定された数の壁ブロックをランダムに赤色に置き換える
     function replaceRandomWallWithRed(maze, redCount) {
         const walls = [];
 
@@ -87,7 +102,21 @@ function generateMaze(width, height) {
         for (let i = 0; i < redCount && walls.length > 0; i++) {
             const randomIndex = Math.floor(Math.random() * walls.length);
             const { x, y } = walls.splice(randomIndex, 1)[0];
-            maze[y][x] = 4; // 赤色のブロックに置き換える
+            const randomNum = Math.floor(Math.random() * 8);
+            switch(randomNum) {
+                case 0:
+                case 1:
+                case 2:
+                    maze[y][x] = 2;
+                    break;
+                case 3:
+                case 4:
+                    maze[y][x] = 4;
+                    break;
+                default:
+                    maze[y][x] = 0;
+                    break;
+            }
         }
         return maze;
     }
@@ -105,29 +134,37 @@ let world = {
 for (let i = 0; i <= WORLD_HEIGHT; i++) {
     let bow = [];
     for (let j = 0; j <= WORLD_WIDTH; j++) {
-        if (j === WIDTH_GAP || j === WORLD_WIDTH - WIDTH_GAP || i === HEIGHT_GAP || i === WORLD_HEIGHT - HEIGHT_GAP) bow.push(1)
-        else bow.push(0);
+        if (j === WIDTH_GAP - 1 || j === WORLD_WIDTH - WIDTH_GAP || i === HEIGHT_GAP - 1 || i === WORLD_HEIGHT - HEIGHT_GAP) {
+            bow.push(1);
+        } else bow.push(0);
     }
     world.blocks.push(bow);
 }
 
-const maze = generateMaze(WORLD_WIDTH - WIDTH_GAP - 1, WORLD_HEIGHT - HEIGHT_GAP - 1);
-world.blocks = world.blocks.map((item, index) => {
-    if (HEIGHT_GAP < index && index < WORLD_HEIGHT - HEIGHT_GAP) {
-        return item.map((item2, index2) => {
-            if (WIDTH_GAP < index2 && index2 < WORLD_WIDTH - WIDTH_GAP) {
-                return maze[index - HEIGHT_GAP][index2 - WIDTH_GAP];
-            }
-            return item2;
-        })
+try{
+const maze = generateMaze(WORLD_WIDTH - WIDTH_GAP + 2, WORLD_HEIGHT - HEIGHT_GAP + 2);
+for (let y = 0; y <= WORLD_HEIGHT; y++) {
+    for (let x = 0; x <= WORLD_WIDTH; x++) {
+        if (WIDTH_GAP - 1 < x && x < WORLD_WIDTH - WIDTH_GAP && HEIGHT_GAP - 1 < y && y < WORLD_HEIGHT - HEIGHT_GAP)
+            world.blocks[y][x] = maze[y][x];
     }
-    return item;
-});
+}
+}catch(e) {
+    alert(e);
+}
 
-world.blocks[HEIGHT_GAP + 1][WIDTH_GAP + 1] = 5;
+// スタート地点
+world.blocks[HEIGHT_GAP][WIDTH_GAP] = 5;
+// ゴール地点
+// ゴール地点
+world.blocks
+    [Math.floor(Math.random() * (WORLD_HEIGHT - HEIGHT_GAP - 1)) + HEIGHT_GAP + 1]
+    [Math.floor(Math.random() * (WORLD_WIDTH - WIDTH_GAP - 1)) + WIDTH_GAP + 1]
+         = 3;
 
-let playerX = 1;
-let playerY = 1;
+
+let playerX = 0;
+let playerY = 0;
 
 function draw(relay) {
     // relay is a 2D array of numbers
@@ -159,7 +196,8 @@ function draw(relay) {
     }
     htmlStr += `</table>`;
     htmlStr += `<div class="location">playerX: ${playerX} playerY: ${playerY}   </div>`
-    htmlStr += `<div class="location">point: ${point}</div>`
+    htmlStr += `<div class="location">point: ${point}</div>`;
+    htmlStr += `<div class="location">timer: ${timer}</div>`;
     canvasEle.innerHTML = htmlStr;
     mainLoop();
 }
@@ -190,7 +228,18 @@ function move(worldData, scrollY, scrollX) {
 }
 
 function init() {
-    alert("start!!");
+    // time out
+    setTimeout(() => {
+        if (!didFinish) {
+            canMove = false;
+            alertTitle("Time Up!")
+        }
+    }, 1000 * 60);
+    setInterval(() => {
+        if (!didFinish) {
+            timer++;
+        }
+    }, 1000)
     load();
     canMove = true;
 }
@@ -206,16 +255,32 @@ function setNowBlock(id, x = 0, y = 0) {
 function mainLoop() {
     const nowBlock = getNowBlock();
     if (nowBlock === 4) {
-        alert("game over");
+        alertTitle("game over");
         canMove = false;
+        didFinish = true;
     }
     if (nowBlock === 3) {
-        alert("you win");
+        alertTitle("you win");
         canMove = false;
+        didFinish = true;
     }
     if (nowBlock === 2) {
         point++;
         setNowBlock(0);
+    }
+    if (nowBlock === 3) {
+        if (canGoal) {
+            alertTitle("you win");
+            canMove = false;
+            didFinish = true;
+        } else {
+            alertTitle("collect point!");
+            canMove = true;
+        }
+    }
+    if (point === 25) {
+        alertTitle("Go to goal");
+        canGoal = true;
     }
 }
 
