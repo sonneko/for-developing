@@ -143,16 +143,12 @@ for (let i = 0; i <= WORLD_HEIGHT; i++) {
     world.blocks.push(bow);
 }
 
-try {
-    const maze = generateMaze(WORLD_WIDTH - WIDTH_GAP + 2, WORLD_HEIGHT - HEIGHT_GAP + 2);
-    for (let y = 0; y <= WORLD_HEIGHT; y++) {
-        for (let x = 0; x <= WORLD_WIDTH; x++) {
-            if (WIDTH_GAP - 1 < x && x < WORLD_WIDTH - WIDTH_GAP && HEIGHT_GAP - 1 < y && y < WORLD_HEIGHT - HEIGHT_GAP)
-                world.blocks[y][x] = maze[y][x];
-        }
+const maze = generateMaze(WORLD_WIDTH - WIDTH_GAP + 2, WORLD_HEIGHT - HEIGHT_GAP + 2);
+for (let y = 0; y <= WORLD_HEIGHT; y++) {
+    for (let x = 0; x <= WORLD_WIDTH; x++) {
+        if (WIDTH_GAP - 1 < x && x < WORLD_WIDTH - WIDTH_GAP && HEIGHT_GAP - 1 < y && y < WORLD_HEIGHT - HEIGHT_GAP)
+            world.blocks[y][x] = maze[y][x];
     }
-} catch (e) {
-    alert(e);
 }
 
 // スタート地点
@@ -187,9 +183,17 @@ function draw(relay) {
     for (let y = 0; y < CANVAS_HEIGHT; y++) {
         htmlStr += `<tr>`;
         for (let x = 0; x < CANVAS_WIDTH; x++) {
+            let enemy;
+            enemyList.forEach((item) => {
+                if (item.x === x + playerX - WIDTH_GAP && item.y === y+ playerY - HEIGHT_GAP) {
+                    enemy = "敵"
+                }
+            })
             // if player exit
             if (x === WIDTH_GAP && y === HEIGHT_GAP) {
                 htmlStr += `<td class="cell img-${texture[relay[x][y]]}">👤</td>`
+            } else if (enemy !== undefined) {
+                htmlStr += `<td class="cell img-${texture[relay[x][y]]}">${enemy}</td>`
             } else {
                 htmlStr += `<td class="cell img-${texture[relay[x][y]]}">　</td>`;
             }
@@ -242,10 +246,10 @@ function init() {
             timer++;
         }
     }, 1000)
-    // summon enemy
-    summonEnemy();
     load();
     canMove = true;
+    for (let i = 0; i <= 2; i++) summonEnemy()
+    alert(JSON.stringify(enemyList[0]))
 }
 
 function summonEnemy() {
@@ -268,6 +272,10 @@ function summonEnemy() {
 
 function getNowBlock(x = 0, y = 0) {
     return world.blocks[playerY - y + HEIGHT_GAP][playerX - x + WIDTH_GAP];
+}
+
+function getBlock(x, y) {
+    return world.blocks[y][x];
 }
 
 function setNowBlock(id, x = 0, y = 0) {
@@ -311,6 +319,19 @@ function mainLoop() {
         alertTitle("Go to goal");
         canGoal = true;
     }
+    // move enemy
+    enemyList.forEach((item) => {
+        const { x, y } = item;
+        let canMoveRange = [];
+        if (getBlock(x - 1, y) === 1) canMoveRange.push([1,0])
+        if (getBlock(x + 1, y) === 1) canMoveRange.push([-1,0])
+        if (getBlock(x, y - 1) === 1) canMoveRange.push([0,1])
+        if (getBlock(x, y + 1) === 1) canMoveRange.push([0,-1])
+        alertTitle(JSON.stringify(canMoveRange));
+        const randomNum = Math.floor(Math.random() * canMoveRange.length);
+        item.x += canMoveRange[randomNum][0];
+        item.y += canMoveRange[randomNum][1];
+    })
 }
 
 function load() {
@@ -382,4 +403,3 @@ document.addEventListener('keydown', function (event) {
 });
 
 init();
-
