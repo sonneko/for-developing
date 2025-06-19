@@ -1,1 +1,1 @@
-A simple HTML/JS/CSS starter template
+## very worthless maze game with simple HTML/JS/CSS
